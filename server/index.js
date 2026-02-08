@@ -1,13 +1,14 @@
 const express = require("express");
-const app = express();
 const http = require("http");
-const cors = require("cors");
 const { Server } = require("socket.io");
+const cors = require("cors");
 
+const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
 
+// Initialize Socket.io with CORS allowed for React
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -18,9 +19,14 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  // This is where we will handle drawing data later
+  // When a user draws, broadcast the data (coords + color) to everyone else
   socket.on("send_drawing", (data) => {
     socket.broadcast.emit("receive_drawing", data);
+  });
+
+  // Handle the clear canvas event
+  socket.on("clear_canvas", () => {
+    socket.broadcast.emit("clear_canvas");
   });
 
   socket.on("disconnect", () => {
@@ -28,6 +34,7 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(5000, () => {
-  console.log("SERVER RUNNING ON PORT 5000");
+const PORT = 5000;
+server.listen(PORT, () => {
+  console.log(`SERVER RUNNING ON PORT ${PORT}`);
 });
